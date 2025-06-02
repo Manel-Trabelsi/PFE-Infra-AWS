@@ -299,3 +299,48 @@ resource "kubernetes_config_map" "aws_auth" {
 
   depends_on = [aws_eks_node_group.node_group]
 }
+resource "helm_release" "argocd" {
+  name             = "argocd"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  namespace        = "argocd"
+  create_namespace = true
+
+  values = [file("values/argocd-values.yaml")]
+}
+
+resource "kubernetes_ingress_v1" "argocd_ingress" {
+  metadata {
+    name      = "argocd-server"
+    namespace = "argocd"
+    annotations = {
+      "kubernetes.io/ingress.class" = "nginx"
+      "nginx.ingress.kubernetes.io/ssl-redirect" = "true"
+      "nginx.ingress.kubernetes.io/backend-protocol" = "HTTPS"
+    }
+  }
+
+  spec {
+    ingress_class_name = "nginx"
+
+    rule {
+      host = "argo-cd.int-infra.com"
+
+      http {
+        path {
+          path      = "/"
+          path_type = "Prefix"
+
+          backend {
+            service {
+              name = "argocd-server"
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
