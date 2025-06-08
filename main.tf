@@ -324,7 +324,7 @@ resource "kubernetes_ingress_v1" "argocd_ingress" {
     ingress_class_name = "nginx"
 
     rule {
-      host = "argo-cd.int-infra.com"
+      host = "argo-cd.dev-infra.com"
 
       http {
         path {
